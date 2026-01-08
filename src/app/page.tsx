@@ -1,101 +1,168 @@
-import Image from "next/image";
+'use client'
+import { useEffect, useState } from 'react'
+
+type Task = {
+  id: string
+  title: string
+  completed: boolean
+  dueDate?: string | null
+}
+
+function daysUntil(date: string) {
+  const today = new Date()
+  const due = new Date(date)
+
+  today.setHours(0, 0, 0, 0)
+  due.setHours(0, 0, 0, 0)
+
+  return Math.ceil(
+    (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  )
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [title, setTitle] = useState('')
+  const [dueDate, setDueDate] = useState('')
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+  const load = async () => {
+    const r = await fetch('/api/tasks')
+    setTasks(await r.json())
+  }
+
+  useEffect(() => {
+    load()
+  }, [])
+
+  const add = async () => {
+    if (!title.trim()) return
+
+    await fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        dueDate: dueDate || null,
+      }),
+    })
+
+    setTitle('')
+    setDueDate('')
+    load()
+  }
+
+  const toggle = async (t: Task) => {
+    await fetch('/api/tasks', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: t.id,
+        completed: !t.completed,
+      }),
+    })
+    load()
+  }
+
+  const remove = async (id: string) => {
+    await fetch('/api/tasks', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    load()
+  }
+
+  return (
+    <main className="mx-auto max-w-xl p-10">
+      <h1 className="mb-6 text-3xl font-bold">📚 Study Planner</h1>
+
+      {/* ADD TASK */}
+      <div className="mb-6 flex gap-2">
+        <input
+          className="flex-1 rounded border px-3 py-2"
+          placeholder="New task…"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          className="rounded border px-3 py-2"
+        />
+        <button
+          className="rounded bg-black px-4 py-2 text-white"
+          onClick={add}
         >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+          Add
+        </button>
+      </div>
+
+      {/* TASK LIST */}
+      <ul className="space-y-2">
+        {tasks.map(t => {
+          const daysLeft = t.dueDate ? daysUntil(t.dueDate) : null
+
+          const label =
+            daysLeft === null
+              ? null
+              : daysLeft < 0
+              ? 'Overdue'
+              : daysLeft === 0
+              ? 'Today'
+              : `${daysLeft} day${daysLeft > 1 ? 's' : ''} left`
+
+          return (
+            <li
+              key={t.id}
+              className="flex items-start gap-3 rounded-lg border p-4"
+            >
+              <input
+                type="checkbox"
+                checked={t.completed}
+                onChange={() => toggle(t)}
+                className="mt-1 h-5 w-5 accent-black"
+              />
+
+              <div className="flex-1">
+                <div
+                  className={
+                    t.completed
+                      ? 'line-through text-zinc-400'
+                      : 'text-zinc-800'
+                  }
+                >
+                  {t.title}
+                </div>
+
+                {t.dueDate && (
+                  <div
+                    className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-medium
+                      ${
+                        daysLeft! < 0
+                          ? 'bg-red-100 text-red-700'
+                          : daysLeft === 0
+                          ? 'bg-orange-100 text-orange-700'
+                          : daysLeft! <= 3
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-zinc-100 text-zinc-600'
+                      }`}
+                  >
+                    {new Date(t.dueDate).toLocaleDateString()} • {label}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => remove(t.id)}
+                className="text-sm text-zinc-400 hover:text-red-500"
+              >
+                Delete
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </main>
+  )
 }
