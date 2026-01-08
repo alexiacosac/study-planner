@@ -4,8 +4,7 @@ This project is a full-stack web application built to help manage study tasks in
 
 The application is built using Next.js and TypeScript and is deployed in production on Vercel. A PostgreSQL database hosted on Supabase is used for data persistence.
 
-Features
-
+Features:
 - Create and delete tasks
 - Mark tasks as completed
 - Optional due dates for tasks
@@ -29,3 +28,7 @@ Database:
 
 Deployment:
 - Vercel
+
+Project Overview
+
+The frontend communicates with the backend through REST API routes. All database operations are handled using Prisma, ensuring type-safe access to the PostgreSQL database.
